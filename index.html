@@ -1,9 +1,651 @@
+
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Basic Web Page</title>
-    </head>
-    <body>
-Hello World!
-    </body>
+<head>
+  <meta charset="utf-8">
+  <title>철권 커맨드 입력기</title>
+  <link rel="stylesheet" href="tekken-style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="text/javascript" src="./plug-in/jquery-3.3.1.js"></script>
+  <script type="text/javascript" src="./plug-in/html2canvas-0.4.1.js"></script>
+  <link rel="shortcut icon" href="favicon.ico">
+</head>
+<body id="body" onload="onLoadFunction();">
+  <div class="popup-window-container">
+    <div class="popup-window" id="canvas-window">
+      <div class="popup-title-container">
+        <span id="popup-title-text">
+          이미지 저장
+        </span>
+        <button id="popup-close-button" onclick="$('.popup-window-container').css('display', 'none');">
+          X
+        </button>
+      </div>
+      <div class="popup-content">
+        <div>
+          <div class="popup-image"></div>
+          <div id="popup-info-text">브라우저에 따라서 저장하기 기능이 제대로 동작하지 않을 수 있습니다.</div>
+          <!-- <span class="tooltip" id="popup-info-button">?<span id="popup-tooltip-text"><img src="./images/save-as-example.gif"></span></span> -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="header" id="stickyHeader">
+    <button class="minimize" id="minimize_button">
+      ▲
+    </button>
+    <div class="grid_class">
+      <div class="cell_parent" id="white_cell">
+        <p class="header_title">
+          레버 기본
+        </p>
+        <div class="horizontal_grid">
+          <div class="cell_child" id="white_cell_content">
+
+          </div>
+          <div class="cell_child" id="black_cell_content">
+
+          </div>
+        </div>
+      </div>
+      <div class="cell_parent" id="command_cell">
+        <p class="header_title">
+          버튼
+        </p>
+        <div class="cell_child" id="command_cell_content">
+          <div class="command_cell_div" id="command_cell_div1">
+
+          </div>
+          <div class="command_cell_div" id="command_cell_div2">
+
+          </div>
+        </div>
+      </div>
+      <div class="cell_parent" id="misc_cell">
+        <p class="header_title">
+          기타
+        </p>
+        <div class="cell_child" id="misc_cell_content">
+
+        </div>
+      </div>
+      <div class="cell_parent" id="bg_color_cell">
+        <p class="header_title">
+          배경색
+        </p>
+        <div class="cell_child" id="bg_color_cell_content">
+          <button class="bgColor" id="bgcolor" style="background-color: #F0F3BD;" onclick="document.documentElement.style.setProperty('--bg-color', '#F0F3BD');"></button>
+          <button class="bgColor" id="yellowgreen" style="background-color: yellowgreen;" onclick="document.documentElement.style.setProperty('--bg-color', 'yellowgreen');"></button>
+          <button class="bgColor" id="white" style="background-color: white;" onclick="document.documentElement.style.setProperty('--bg-color', 'white');"></button>
+          <button class="bgColor" id="LightSlateGray" style="background-color: LightSlateGray;" onclick="document.documentElement.style.setProperty('--bg-color', 'lightslategray');"></button>
+          <button class="bgColor" id="darkblue" style="background-color: darkblue;" onclick="document.documentElement.style.setProperty('--bg-color', 'darkblue');"></button>
+          <button class="bgColor" id="gray" style="background-color: gray;" onclick="document.documentElement.style.setProperty('--bg-color', 'gray');"></button>
+          <button class="bgColor" id="forestgreen" style="background-color: forestgreen;" onclick="document.documentElement.style.setProperty('--bg-color', 'forestgreen');"></button>
+        </div>
+      </div>
+      <div class="cell_parent" id="web_control_cell">
+        <p class="header_title">
+          출력 창
+        </p>
+        <div class="cell_child" id="web_control_cell_content">
+          <button class="web_control_button" onclick="insertText();">글 삽입</button>
+          <button class="web_control_button tooltip" title="엔터" onclick="enter();">줄 바꿈<span class="tooltip-text">줄 바꿈<br>(단축키: 엔터)</span></button>
+          <button class="web_control_button" onclick="eraseAll();">전체 지움</button>
+          <button class="web_control_button tooltip" onclick="erase();">지우기<span class="tooltip-text">지움<br>(단축키: 백스페이스/딜리트)</span></button>
+          <button class="web_control_button tooltip" onclick="modifingMode();" id="modifingButton">수정 모드<span class="tooltip-text">중간에 버튼을 추가할 수 있습니다.</span></button>
+          <button class="web_control_button tooltip" onclick="makeShareImage();" id="imageDonwloadButton">이미지로 저장</button>
+          <button class="web_control_button tooltip" onclick="makeShareURL();" id="shareURLButton">공유 URL 생성</button>
+        </div>
+      </div>
+      <div class="hidden_header" id="hidden_header_id">
+        <br>
+      </div>
+    </div>
+  </div>
+
+  <div id="result_cell">
+    <p class="output_title" id="output_title_id">출력 창</p>
+    <div id="commands">
+      
+    </div>
+  </div>
+
+  <div class="arrow-div">
+    <button class="arrow-button" onclick="moveCursor('left');">
+      ◀
+    </button>
+    <button class="arrow-button" onclick="moveCursor('right');">
+      ▶
+    </button>
+  </div>
+
+  <script>
+    var whiteCell = document.getElementById("white_cell_content");
+    var blackCell = document.getElementById("black_cell_content");
+    var commandCell = document.getElementById("command_cell_content");
+    var miscCell = document.getElementById("misc_cell_content");
+    var resultCell = document.getElementById("result_cell_content");
+    var commands = document.getElementById("commands");
+    var command1 = document.getElementById("command_cell_div1");
+    var command2 = document.getElementById("command_cell_div2");
+    var webContent = document.getElementById("web_control_cell_content");
+    var minimizeButton = document.getElementById("minimize_button");
+
+    // 모바일 모드 최소화 버튼
+    minimizeButton.onclick = function() {
+      var cellChildList = document.getElementsByClassName("cell_child");
+      var cellParentList = document.getElementsByClassName("cell_parent");
+
+      if(this.innerText == "▲") { // 펼쳐진 상태
+        for(var i = 0; i < cellParentList.length; i++) {
+          cellParentList[i].style.display = "none";
+        }
+        this.innerText = "▼";
+        $(hidden_header_id).css("display", "block");
+      } else { // 접혀진 상태
+        for(var i = 0; i < cellParentList.length; i++) {
+          cellParentList[i].style.display = "grid";
+        }
+        this.innerText = "▲";
+        $(hidden_header_id).css("display", "none");
+      }
+    };
+
+    // 방향키 순서가 7 8 9 / 4 5 6 / 1 2 3 이렇게 되어 있어서 for문 한 개로 하면 오히려 복잡해짐
+    // 흰 방향키
+    addImageButton(whiteCell, "./images/w7.png", "cmd tooltip", "w7", null, "레버 7\n(단축키: 키패드 7)");
+    addImageButton(whiteCell, "./images/w8.png", "cmd tooltip", "w8", null, "레버 8\n(단축키: 키패드 8)");
+    addImageButton(whiteCell, "./images/w9.png", "cmd tooltip", "w9", null, "레버 9\n(단축키: 키패드 9)");
+    addImageButton(whiteCell, "./images/w4.png", "cmd tooltip", "w4", null, "레버 4\n(단축키: 키패드 4)");
+    addImageButton(whiteCell, "./images/n.png", "cmd tooltip", "n", null, "레버 5\n(단축키: 키패드 5)");
+    addImageButton(whiteCell, "./images/w6.png", "cmd tooltip", "w6", null, "레버 6\n(단축키: 키패드 6)");
+    addImageButton(whiteCell, "./images/w1.png", "cmd tooltip", "w1", null, "레버 1\n(단축키: 키패드 1)");
+    addImageButton(whiteCell, "./images/w2.png", "cmd tooltip", "w2", null, "레버 2\n(단축키: 키패드 2)");
+    addImageButton(whiteCell, "./images/w3.png", "cmd tooltip", "w3", null, "레버 3\n(단축키: 키패드 3)");
+
+    // 검은 방향키
+    addImageButton(blackCell, "./images/b7.png", "cmd tooltip", "b7", null, "레버 7 유지");
+    addImageButton(blackCell, "./images/b8.png", "cmd tooltip", "b8", null, "레버 8 유지");
+    addImageButton(blackCell, "./images/b9.png", "cmd tooltip", "b9", null, "레버 9 유지");
+    addImageButton(blackCell, "./images/b4.png", "cmd tooltip", "b4", null, "레버 4 유지");
+    addImageButton(blackCell, "./images/n.png", "cmd tooltip", "n", null, "레버 5 유지");
+    addImageButton(blackCell, "./images/b6.png", "cmd tooltip", "b6", null, "레버 6 유지");
+    addImageButton(blackCell, "./images/b1.png", "cmd tooltip", "b1", null, "레버 1 유지");
+    addImageButton(blackCell, "./images/b2.png", "cmd tooltip", "b2", null, "레버 2 유지");
+    addImageButton(blackCell, "./images/b3.png", "cmd tooltip", "b3", null, "레버 3 유지");
+
+    // 스틱 버튼
+    addImageButton(command1, "./images/c2.png", "cmd tooltip", "c2", null, "왼손\n(단축키: q)");
+    addImageButton(command1, "./images/c3.png", "cmd tooltip", "c3", null, "오른손\n(단축키: w)");
+    addImageButton(command1, "./images/c5.png", "cmd tooltip", "c5", null, "왼발\n(단축키: a)");
+    addImageButton(command1, "./images/c9.png", "cmd tooltip", "c9", null, "오른발\n(단축키: s)");
+    addImageButton(command2, "./images/c6.png", "cmd tooltip", "c6", null, "왼손+왼발");
+    addImageButton(command2, "./images/c11.png", "cmd tooltip", "c11", null, "오른손+오른발");
+    addImageButton(command2, "./images/c4.png", "cmd tooltip", "c4", null, "양손");
+    addImageButton(command2, "./images/c13.png", "cmd tooltip", "c13", null, "양발");
+    addImageButton(command2, "./images/c10.png", "cmd tooltip", "c10", null, "왼손+오른발");
+    addImageButton(command2, "./images/c7.png", "cmd tooltip", "c7", null, "오른손+왼발");
+    addImageButton(command2, "./images/c8.png", "cmd tooltip", "c8", null, "왼손+오른손+왼발");
+    addImageButton(command2, "./images/c12.png", "cmd tooltip", "c12", null, "왼손+오른손+오른발");
+    addImageButton(command2, "./images/c14.png", "cmd tooltip", "c14", null, "왼손+왼발+오른발");
+  	addImageButton(command2, "./images/c15.png", "cmd tooltip", "c15", null, "오른손+왼발+오른발");
+  	addImageButton(command2, "./images/c16.png", "cmd tooltip", "c16", null, "왼손+오른손+왼발+오른발");
+
+    // 기타 버튼
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "▶", "다음\n(단축키: 스페이스바)");
+    addImageButton(miscCell, null, "misc_button no_background tooltip justInput", null, "와 동시에 ", "동시 입력");
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "~", "계속 유지");
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "[", "빠르게 연속 입력");
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "]", "빠르게 연속 입력");
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "(누적)", "버튼을 누른 채 떼지 않고 유지", function() {
+      var container = $("<span class='accrue-container'></span>");
+      if(isModifingMode) { // 수정모드일 때
+        $("#commands>*:not(#blink-cursor)").eq(afterElement++).after(container);
+      } else { // 일반모드일 때
+        $("#commands").append(container);
+      }
+      var accrueText = container.append("<p class='accrue-text'>누적</p>");
+      var inputTarget = container.append("<span class='accrue-button-container' id='inputTarget'></span>");
+
+      container.click(function() {
+        this.remove();
+      });
+    });
+    addImageButton(miscCell, null, "misc_button no_background tooltip", null, "(실입력)", "누적을 적용하여 철권에서 인식하는 실제 입력", function() {
+      var container = $("<span class='actual-input-container'></span>");
+      if(isModifingMode) { // 수정모드일 때
+        $("#commands>*:not(#blink-cursor)").eq(afterElement++).after(container);
+      } else { // 일반모드일 때
+        $("#commands").append(container);
+      }
+      var actualInputTitleContainer = $("<div class='actual-input-title-container' id='actualInputTitleContainer'>");
+      container.append(actualInputTitleContainer);
+      var actualInputText1 = actualInputTitleContainer.append("<p class='actual-input-text'>실입력</p>");
+      var actualInputText2 = actualInputTitleContainer.append("<span class='actual-input-text'>(</span>");
+      var actualInputButtonContainer = actualInputTitleContainer.append("<span class='actual-input-button' id='inputTarget'></span>");
+      var actualInputText3 = actualInputTitleContainer.append("<span class='actual-input-text'>)</span>");
+      var inputResultButtonContainer = container.append("<span class='input-result-button-container' id='inputTarget'></span>");
+
+      actualInputText1.css("font-size", "10px");
+
+      container.click(function() {
+        this.remove(this);
+      });
+    });
+//     addImageButton(miscCell, null, "misc_button no_background tooltip", null, "_", "잠시 유지");
+    
+    // 기타 버튼 2
+    addImageButton(miscCell, null, "misc_button tooltip", null, "스크류", "(단축키: r)");
+    addImageButton(miscCell, null, "misc_button tooltip", null, "대시", "(단축키: d)");
+    var miscList = [
+      "S", "D", "카운터", "벽꽝", "플로어 브레이크", "발코니 브레이크", "벽 브레이크", "레아", "레드", "일어나며", "앉은 상태에서", "앉으며", "벽 바운드", "흘리기", "횡캔슬", "횡신", "횡보", "반시계 횡", "시계 횡", "낙법", "뒤돌아", "역가드", "딜레이", "바운드", "태그"
+    ];
+    for (var i in miscList) {
+      var btn = addImageButton(miscCell, null, "misc_button tooltip", null, miscList[i], null);
+      i == 0 || i == 1 ? btn.style.display = "inline-block" : null;
+    }
+    // (직접 추가) 버튼
+    addImageButton(miscCell, null, "misc_button tooltip", "add-in-person", "(직접 추가)", "버튼을 추가합니다.", function() {
+      var text = prompt("원하는 문구를 넣어 직접 버튼을 추가할 수 있습니다.\n예) 특수자세, 왼플라밍고, 웨이브 등");
+      if(text !=  null) {
+        drawCommand(null, "misc_button tooltip", "add-in-person", text);
+      }
+    });
+    // 펼치기 버튼(기타 셀)
+    addImageButton(miscCell, null, "expand tooltip", null, "+", "펼치기", function() {
+      if(this.innerText == "+펼치기" || this.innerText == "+") { // 숨겨진 상태
+        $('.misc_button').addClass("show");
+
+        this.innerText = "-";
+        var spanTag = document.createElement("span");
+        spanTag.className = "tooltip-text";
+        spanTag.innerText = "숨기기";
+
+        this.appendChild(spanTag);
+      } else { // 펼쳐진 상태
+        $('.misc_button').removeClass("show");
+
+        this.innerText = "+";
+        var spanTag = document.createElement("span");
+        spanTag.className = "tooltip-text";
+        spanTag.innerText = "펼치기";
+
+        this.appendChild(spanTag);
+      }
+    });
+
+
+    function addImageButton(cell, url, className, id, text, tooltip, clickFunction) {
+      var btn = document.createElement("button");
+      if(className != null) btn.className = className;
+      if(url != null) btn.style.backgroundImage = "url('" + url + "')";
+      if(id != null) btn.id = id;
+      if(text != null) btn.innerText = text;
+      if(tooltip != null) {
+        var spanTag = document.createElement("span");
+        spanTag.className = "tooltip-text";
+        spanTag.innerText = tooltip;
+
+        btn.appendChild(spanTag);
+      }
+
+      // console.log("isModifingMode? " + isModifingMode + " cell? " + cell.id);
+      if(isModifingMode && cell == commands) { // 수정모드일 때
+        $("#commands>*:not(#blink-cursor)").eq(afterElement++).after(btn);
+      } else { // 일반모드일 때
+        cell.appendChild(btn);
+      }
+
+      // misc 버튼들 번호 매기기 (makeShareURL을 위해)
+      if(cell == miscCell) {
+        btn.id = "m" + (miscCell.childElementCount - 1);
+      }
+
+      if(clickFunction == null) {
+        btn.onclick = function() { // 버튼 클릭하면 result 셀에 복사
+          drawCommand(url, className, btn.id, text); // 그냥 id를 넘기면 자바스크립트로 설정해놓은 id들이 넘어가지 않는다.
+        };
+      } else {
+        btn.onclick = clickFunction;
+      }
+
+      return btn;
+    }
+
+    function drawCommand(url, className, id, text) {
+      var target = document.getElementById("inputTarget") == null ? commands : document.getElementById("inputTarget"); // 누적, 실입력 버튼 구현을 위함
+
+      if(target.id == "inputTarget") { // 누적, 실입력에 엉뚱한 버튼이 들어가는 현상 방지
+        if(!$("#" + id).parent().hasClass("command_cell_div")) {
+          alert("누적 혹은 실입력에는 손, 발 커맨드 버튼만 입력할 수 있습니다.");
+          return;
+        }
+      }
+
+      var copy = addImageButton(target, url, className, id, text, "클릭하여 삭제");
+      copy.onclick = function() { 
+        copy.parentNode.removeChild(copy);
+        afterElement--;
+      }; // 복사된 버튼은 누르면 자기 자신을 삭제
+
+      if(target != commands) {
+        target.id = null;
+      }
+    }
+
+    function addTag(cell, tag, className, id) {
+      var element = document.createElement(tag);
+      if(className != null) element.setAttribute("class", className);
+      if(id != null) element.setAttribute("id", id);
+      cell.appendChild(element);
+
+      return element;
+    }
+
+    function onLoadFunction() {
+      readShareURL();
+      // var url = new URL(document.URL);
+      // var params = url.searchParams.get("commands");
+      //
+      // if(params != null) {
+      //   var paramsList = params.split("/");
+      //
+      //   for(var i in paramsList) {
+      //     var par = paramsList[i].split("-");
+      //     var url = "./images/" + par[0] + ".png";
+      //     var className = par[1];
+      //     var id = par[2];
+      //     var text = par[3];
+      //
+      //     drawCommand(url, className, id, text);
+      //   }
+      // }
+    }
+
+    function insertText() {
+      var input = $("<input class='input_title'>");
+
+      if(isModifingMode) {
+        if(!$("#commands").is(":empty")) enter();
+        $("#commands>*:not(#blink-cursor)").eq(afterElement++).after(input);
+        enter();
+      } else {
+        if(!$("#commands").is(":empty")) enter();
+        $("#commands").append(input);
+        enter();
+      }
+      input.focus();
+    }
+
+    function enter() {
+      var br = $("<br>");
+
+      if(isModifingMode) {
+        $("#commands>*:not(#blink-cursor)").eq(afterElement++).after(br);
+      } else {
+        $("#commands").append(br);
+      }
+    }
+
+    function eraseAll() {
+      window.open(location.protocol + '//' + location.host + location.pathname, "_self");
+      // $("#commands").text("");
+    }
+
+    function erase() {
+      if(isModifingMode) {
+        $("#commands>*:not(#blink-cursor)").eq(afterElement--).remove();
+      } else {
+        $("#commands>*:not(#blink-cursor)").last().remove();
+      }
+    }
+
+    var isModifingMode = false;
+    var afterElement = 0;
+    var blinkCursor;
+    function modifingMode() {
+      if(!isModifingMode) {
+        blinkCursor = document.createElement('span');
+        blinkCursor.id = 'blink-cursor';
+        $("#commands>*:not(#blink-cursor)").last().after(blinkCursor);
+        isModifingMode = true;
+        afterElement = $("#commands>*:not(#blink-cursor)").length - 1;
+        $("#modifingButton").addClass("overlay");
+      } else {
+        $("#modifingButton").removeClass("overlay");
+        $("#blink-cursor").remove();
+        isModifingMode = false;
+      }
+
+      $(".arrow-div").css("display", "block");
+    }
+
+    function moveCursor(direction) {
+      if(!isModifingMode) return;
+
+      if(direction == "left" && afterElement > 0) {
+        afterElement -= 1;
+      } else if(direction == "left" && afterElement == 0) {
+        // $("#blink-cursor").remove();
+        $("#commands>*:not(#blink-cursor)").eq(0).before(blinkCursor);
+        afterElement--;
+        return;
+      } else if(direction == "right" && afterElement < $("#commands>*:not(#blink-cursor)").length - 1) {
+        afterElement += 1;
+      } else {
+        return;
+      }
+
+      $("#blink-cursor").remove();
+      $("#commands>*:not(#blink-cursor)").eq(afterElement).after(blinkCursor);
+    }
+
+    function makeShareImage() {
+      $(".popup-image").empty();
+      $(".popup-window-container").css("display", "block");
+
+      html2canvas($("#commands"), {
+        onrendered: function(canvas) {
+          $(".popup-image").append(canvas);
+
+          $("#commands").append($("<a id='temp'></a>"));
+          $("#temp").attr("href", canvas.toDataURL());
+          $("#temp").attr("download", "tekken-commands.png");
+          $("#temp")[0].click();
+          $("#temp").remove();
+        }
+      });
+
+      // html2canvas 1.0.0 버전용. 알파버전이라서 그런지 갑자기 shadow가 적용되거나 배경이 그대로 캡쳐 되는 등 오류가 많아서 0.4.1을 쓰는 것이 좋아보인다.
+      // html2canvas($("#commands")[0], {
+      //   allowTaint: true,
+      //   useCORS: true,
+      //   logging: true
+      // }).then(function(canvas) {
+      //     $(".popup-image").append(canvas);
+
+      //     $("#commands").append($("<a id='temp'></a>"));
+      //     $("#temp").attr("href", canvas.toDataURL());
+      //     $("#temp").attr("download", "image.png");
+      //     $("#temp")[0].click();
+      //   });
+    }
+
+    function copy2clipboard(val) {
+      var t = document.createElement("textarea");
+      document.body.appendChild(t);
+      t.value = val;
+      t.select();
+      document.execCommand('copy');
+      document.body.removeChild(t);
+    }
+
+    function makeShareURL() {
+      var commandsChildren = $("#commands>*:not(#blink-cursor)");
+      var url = (window.location.href).split("?")[0];
+      var params = "?params=";
+
+      // console.log(commandsChildren.length);
+      for(var i = 0; i < commandsChildren.length; i++) {
+        // console.log(i);
+        params += branchCommands(commandsChildren[i]);
+        params += "|";
+      }
+      params = params.slice(0, -1); // 제일 뒤의 | 삭제
+
+      url += params;
+      copy2clipboard(url);
+      alert(url + "\nurl이 클립보드에 복사되었습니다.");
+    }
+
+    function readShareURL() {
+      var url = window.location.href;
+      var params = url.split("?params=")[1];
+      var paramsList = params.split("|");
+
+      for(var i in paramsList) {
+        branchCommands(paramsList[i]);
+      }
+    }
+
+    function branchCommands(element) {
+      if(jQuery.type(element) == "object") { // encode
+        if($(element).is("button")) {
+          if($(element)[0].id === "add-in-person") {
+            return "add\\" + getTextOnly($(element));
+          } else {
+            return $(element)[0].id;
+          }
+        } else if($(element).is("br")) {
+          return "br";
+        } else if($(element).is("span")) {
+          if($(element).hasClass("accrue-container")) {
+            return "accrue\\" + branchCommands($(element).children().eq(1).children().eq(0));
+          } else if($(element).hasClass("actual-input-container")) {
+            return "actual\\" + branchCommands($(element).children().eq(0).children().eq(2).children().eq(0)) + "\\" + branchCommands($(element).children().eq(1).children().eq(0));
+          }
+        } else if($(element).is("input")) {
+          return "input\\" + ($(element).val() == null ? "null" : encodeURI($(element).val()));
+        } else {
+          return "null";
+        }
+
+      } else if(jQuery.type(element) == "string") { // decode
+        var splitedElement = element.split("\\");
+
+        if(splitedElement[0] == "accrue") {
+          $("#m5").click();
+          if(splitedElement[1] != "null") $("#" + splitedElement[1]).click();
+        } else if(splitedElement[0] == "actual") {
+          $("#m6").click();
+          if(splitedElement[1] != "null") $("#" + splitedElement[1]).click();
+          if(splitedElement[2] != "null") $("#" + splitedElement[2]).click();
+        } else if(splitedElement[0] == "add") {
+          drawCommand(null, "misc_button tooltip", "add-in-person", splitedElement[1]);
+        } else if(splitedElement[0] == "input") {
+          $("#commands").append($("<input class='input_title'>").val(decodeURI(splitedElement[1])));
+        } else if(splitedElement[0] == "null") {
+          return null;
+        } else if(splitedElement[0] == "br") {
+          enter();
+        } else {
+          $("#" + splitedElement[0]).click();
+        }
+      }
+    }
+
+    function getTextOnly(element) { // inner tags는 제외하고 순수 텍스트 내용만 가져오는 함수
+     return $(element)
+        .clone()    //clone the element
+        .children() //select all the children
+        .remove()   //remove all the children
+        .end()  //again go back to selected element
+        .text();
+    }
+
+
+
+    // 키 입력 체크
+    document.body.addEventListener('keydown', function (e) {
+      if(document.activeElement.className == "input_title") return; // 글 수정할 땐 단축키 동작 금지
+
+      if(e.keyCode == 32 || e.keyCode == 13) e.preventDefault(); // 이거 안 해놓으니까 버튼 클릭 후 스페이스 바 or 엔터 키를 누르면 포커스가 남아있어서 이전 버튼이 눌려짐
+//       alert(e.ke yCode);
+
+      var url;
+      switch(e.keyCode) {
+        case 97: // 키패드 1
+          $("#stickyHeader #w1").click();
+          break;
+        case 98: // 키패드 2
+          $("#stickyHeader #w2").click();
+          break;
+        case 99: // 키패드 3
+          $("#stickyHeader #w3").click();
+          break;
+        case 100: // 키패드 4
+          $("#stickyHeader #w4").click();
+          break;
+        case 101: // 키패드 5
+          $("#stickyHeader #white_cell_content #n").click();
+          break;
+        case 102: // 키패드 6
+          $("#stickyHeader #w6").click();
+          break;
+        case 103: // 키패드 7
+          $("#stickyHeader #w7").click();
+          break;
+        case 104: // 키패드 8
+          $("#stickyHeader #w8").click();
+          break;
+        case 105: // 키패드 9
+          $("#stickyHeader #w9").click();
+          break;
+        case 81: // Q
+          $("#stickyHeader #c2").click();
+          break;
+        case 87: // W
+          $("#stickyHeader #c3").click();
+          break;
+        case 65: // A
+          $("#stickyHeader #c5").click();
+          break;
+        case 83: // S
+          $("#stickyHeader #c9").click();
+          break;
+        case 32: // 스페이스바
+          $("#stickyHeader #m0").click();
+          // addImageButton(commands, null, "misc_button no_background tooltip", null, "▶", "클릭하여 삭제").onclick = function() { this.parentNode.removeChild(this); };
+          break;
+        case 13: // 엔터
+          enter();
+          break;
+        case 37: // 왼쪽 방향키
+          moveCursor("left");
+          break;
+        case 39: // 오른쪽 방향키
+          moveCursor("right");
+          break;
+        case 8: // 백스페이스
+        case 46: // 딜리트
+          erase();
+          break;
+        case 82:
+          $("#stickyHeader #m7").click();
+          break;
+        case 68:
+          $("#stickyHeader #m8").click();
+          break;
+        default:
+          return;
+      }
+    });
+
+    // 디버깅 코드
+    if($("#stickyHeader #m0")[0].childNodes[0].nodeValue != "▶") alert("▶ id가 m0이 아닙니다. 디버깅 해주시기 바랍니다.");
+    if($("#stickyHeader #m7")[0].childNodes[0].nodeValue != "스크류") alert("스크류 id가 m7이 아닙니다. 디버깅 해주시기 바랍니다.");
+    if($("#stickyHeader #m8")[0].childNodes[0].nodeValue != "대시") alert("대시 id가 m8이 아닙니다. 디버깅 해주시기 바랍니다.");
+
+  </script>
+</body>
 </html>
